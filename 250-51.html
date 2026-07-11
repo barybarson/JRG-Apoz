@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>SD-30 Magirus V5</title>
+<style>
+body{margin:0;background:#0f172a;font-family:Arial,sans-serif;color:#fff}
+header{padding:25px;text-align:center;background:#111827;box-shadow:0 2px 10px #0005}
+.container{max-width:1000px;margin:auto;padding:20px}
+.menu{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
+.menu button{padding:25px;border:none;border-radius:16px;font-size:22px;background:#2563eb;color:#fff;cursor:pointer}
+.card{background:#1f2937;border-radius:16px;padding:20px}
+.hidden{display:none}
+.answer{display:block;width:100%;margin:10px 0;padding:14px;border:none;border-radius:10px;background:#374151;color:#fff;font-size:18px;cursor:pointer}
+iframe{width:100%;height:1100px;border:none;border-radius:12px;background:#fff}
+</style>
+</head>
+<body>
+<header>
+<h1>🚒 SD-30 Magirus</h1>
+<p>Aplikacja do nauki wyposażenia</p>
+</header>
+
+<div class="container">
+
+<div class="menu">
+<button onclick="show('learn')">▶ Nauka</button>
+<button onclick="show('exam')">🎯 Egzamin</button>
+<button onclick="show('stats')">📊 Statystyki</button>
+</div>
+
+<div id="learn" class="card">
+<h2>Tryb nauki</h2>
+<p>Poniżej znajduje się pełny tryb nauki z licznikiem czasu, rekordami i wpisywaniem wyposażenia.</p>
+<iframe srcdoc='<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8">
+<title>SD-30 Magirus Quiz V4</title>
+<style>
+body{font-family:Arial;background:#eef2f5;margin:0}
+.app{max-width:850px;margin:25px auto;background:#fff;padding:25px;border-radius:14px;box-shadow:0 5px 18px #0002}
+h1{margin:0}select,button,input{font-size:17px;padding:10px}
+input{width:100%;box-sizing:border-box;margin-top:10px}
+.progress{height:22px;background:#ddd;border-radius:20px;overflow:hidden;margin:10px 0}
+#bar{height:100%;background:#27ae60;width:0%}
+.stats{display:flex;justify-content:space-between;font-weight:bold;margin:8px 0}
+.cards{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
+.card{background:#d4edda;border:1px solid #28a745;border-radius:8px;padding:8px 12px}
+#msg{margin-top:10px;color:#b00;font-weight:bold}
+</style>
+<style>
+body{background:#111827;color:#f3f4f6}
+.app{background:#1f2937;color:#f3f4f6;max-width:900px}
+button{background:#2563eb;color:white;border:none;border-radius:10px}
+input,select{background:#374151;color:white;border:1px solid #555;border-radius:10px}
+.card{animation:pop .25s ease}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+#combo,#score,#best,#rank{margin:6px 0;font-weight:bold}
+</style>
+<script>
+let score=0,combo=0,wrong=[],exam=false,best=JSON.parse(localStorage.getItem("bestTimes")||"{}");
+function beep(ok){let c=new (window.AudioContext||window.webkitAudioContext)();let o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=ok?880:220;g.gain.value=.08;o.start();o.stop(c.currentTime+.12);}
+function saveBest(name,t){if(!best[name]||t<best[name]){best[name]=t;localStorage.setItem("bestTimes",JSON.stringify(best));}}
+function renderExtra(){
+ if(!document.getElementById(&#39;score&#39;)){
+  let d=document.createElement(&#39;div&#39;);
+  d.innerHTML=&#39;<div id="score">🏆 Punkty: 0</div><div id="combo">🔥 Combo: 0</div><div id="best"></div><button onclick="startExam()">🎲 Egzamin</button><div id="rank"></div>&#39;;
+  document.querySelector(&#39;.app&#39;).insertBefore(d,document.getElementById(&#39;title&#39;));
+ }
+ document.getElementById(&#39;score&#39;).innerText=&#39;🏆 Punkty: &#39;+score;
+ document.getElementById(&#39;combo&#39;).innerText=&#39;🔥 Combo: &#39;+combo;
+ document.getElementById(&#39;best&#39;).innerText=&#39;📈 Rekord: &#39;+((best[s.value]??&#39;-&#39;)===&#39;-&#39;?&#39;-&#39;:best[s.value]+&#39; s&#39;);
+ let r=JSON.parse(localStorage.getItem(&#39;ranking&#39;)||&#39;[]&#39;).sort((a,b)=>b-a).slice(0,5);
+ document.getElementById(&#39;rank&#39;).innerHTML=&#39;Ranking: &#39;+r.join(&#39;, &#39;);
+}
+function startExam(){exam=true; s.selectedIndex=Math.floor(Math.random()*s.options.length); start();}
+document.addEventListener(&#39;DOMContentLoaded&#39;,()=>{
+ renderExtra();
+ let old=start;
+ start=function(){old();renderExtra();}
+ let oldKey=inp.onkeydown;
+ inp.onkeydown=function(e){
+   if(e.key!=&#39;Enter&#39;)return;
+   let before=ok.length;
+   oldKey(e);
+   if(ok.length>before){combo++;score+=10+combo;beep(true);}
+   else{wrong.push(inp.value);combo=0;beep(false);}
+   renderExtra();
+   if(leftArr.length==0){
+      let sec=Math.floor((Date.now()-st)/1000);
+      saveBest(s.value,sec);
+      let rr=JSON.parse(localStorage.getItem(&#39;ranking&#39;)||&#39;[]&#39;);rr.push(score);localStorage.setItem(&#39;ranking&#39;,JSON.stringify(rr));
+      missing.innerHTML+= &#39;<h3>❌ Do powtórki:</h3><ul>&#39;+wrong.map(x=>&#39;<li>&#39;+x+&#39;</li>&#39;).join(&#39;&#39;)+&#39;</ul>&#39;;
+      if(exam){exam=false;setTimeout(()=>{if(s.selectedIndex<s.options.length-1){s.selectedIndex++;start();}},800);}
+   }
+ }
+});
+</script>
+</head><body><div class="app">
+<h1>🚒 SD-30 MAGIRUS</h1>
+<select id="s"></select> <button onclick="start()">Nowa runda</button>
+<h2 id="title"></h2>
+<div class="progress"><div id="bar"></div></div>
+<div class="stats"><span id="prog"></span><span>⏱ <span id="time">00:00</span></span></div>
+<div class="stats"><span>Poprawnych: <span id="good">0</span></span><span>Pozostało: <span id="left">0</span></span></div>
+<input id="inp" placeholder="Wpisz element...">
+<div id="msg"></div>
+<div class="cards" id="cards"></div>
+<div id="missing"></div>
+<script>
+const d={
+"Kabina":["Detektor prądu zmiennego HotStick","Dalmierz BOSCH","Gaśnica GP","Zestaw do podnoszenia kabiny","Klucze do kół","Rękawice dielektryczne","Lonża GRILON","Uprząż asekuracyjna"],
+"Skrytka 1 prawa":["Aparaty ODO","Maski ODO","Saperka","Siekiera mała","Topór ciężki","Maczeta Fiskars","Siekieromłot Fiskars","Halligan","Wyważarka LUKAS","Pilarka akumulatorowa STIHL","Szlifierka","Gwoździarka","Worki skórzane"],
+"Skrytka 2 prawa":["Najaśnica","Stojak do najaśnicy","Prądownica TurboJet52","Nożyce do prętów","Narzędzie do skuwania sopli","Prądownica PW75","Przełącznik 75/52","Rozdzielacz kulowy","Przedłużacz","Podnośnik hydrauliczny","Kanister 5l","Lejek","Wąż W52","Worek ze sprzętem","Łapka do gwoździ","Młot 5kg","Skrzynka narzędziowa","Wkrętarka HILTI","Mycie rąk"],
+"Skrytka 3 prawa":["Wąż W75 20m","Wąż W75 30m","Przewody elektryczne","Klucz do łączników","Sznur polipropylenowy","Zaczep holowniczy"],
+"Skrytka 1 lewa":["Szyny Kramera","PSP R-1","Półmaska","Piła szablasta","Piła do stali i betonu","Pilarka ratownicza STIHL","Pilarka gałęziówka STIHL","Kliny kompozytowe","Kanister 5l","Olej do łańcucha","Wentylator oddymiający","Szczotka druciana","Taśma szara"],
+"Skrytka 2 lewa":["Skokochron","Butla do skokochronu","Zapasowa butla","Nosze płachtowe","Kaseton z odcinkiem 40m","Pasy do deski","Usztywniacz boczny"],
+"Skrytka 3 lewa":["Worki wysokościowe D1","Worki wysokościowe D2","Gaśnica 4kg","Linka ratownicza 20m"],
+"Podest":["Kliny pod koła","Deska ortopedyczna","Podstawa pod wentylator","Podstawa pod nosze","Kaseton z odcinkiem 40m","Pachołki składane","Uchwyt do stanowisk","Działko wodno-pianowe","Nosze składane","Agregat prądotwórczy","Podkłady pod podpory","Odcinek półsztywny W75","Drabina pomocnicza","Rura do spalin"]
+};
+const alias={halligan:"Halligan",hooligan:"Halligan",topor:"Topór ciężki",kramera:"Szyny Kramera",aku:"Pilarka akumulatorowa STIHL",wentylator:"Wentylator oddymiający",kanister:"Kanister 5l",hotstick:"Detektor prądu zmiennego HotStick",r1:"PSP R-1"};
+for(let k in d)s.add(new Option(k,k));
+let all=[],leftArr=[],ok=[],st,iv;
+const norm=x=>x.toLowerCase().normalize(&#39;NFD&#39;).replace(/[\u0300-\u036f]/g,&#39;&#39;).replace(/[^a-z0-9]/g,&#39;&#39;);
+function timer(){let t=((Date.now()-st)/1000)|0;time.textContent=String((t/60)|0).padStart(2,&#39;0&#39;)+":"+String(t%60).padStart(2,&#39;0&#39;)}
+function upd(){good.textContent=ok.length;left.textContent=leftArr.length;let p=ok.length/all.length*100;bar.style.width=p+"%";prog.textContent=Math.round(p)+"% • "+ok.length+"/"+all.length}
+function start(){clearInterval(iv);st=Date.now();iv=setInterval(timer,1000);timer();title.textContent=s.value;all=[...d[s.value]];leftArr=[...all];ok=[];cards.innerHTML="";missing.innerHTML="";msg.textContent="";upd();inp.value="";inp.focus();}
+inp.onkeydown=e=>{if(e.key!="Enter")return;let v=norm(inp.value);if(alias[v])v=norm(alias[v]);let f=all.find(x=>norm(x).includes(v)||v.includes(norm(x)));if(f&amp;&amp;ok.includes(f)){msg.textContent="✔ "+f+" już był zaliczony";inp.value="";return;}
+let i=leftArr.findIndex(x=>norm(x).includes(v)||v.includes(norm(x)));
+if(i>=0){let it=leftArr.splice(i,1)[0];ok.push(it);cards.innerHTML+=`<div class=&#39;card&#39;>✓ ${it}</div>`;msg.textContent="";upd();if(!leftArr.length){clearInterval(iv);missing.innerHTML="<h3>🎉 Zaliczone! Czas: "+time.textContent+"</h3>";}}
+else msg.textContent="❌ Błędna odpowiedź";
+inp.value="";inp.focus();}
+start();
+</script></body></html>'>
+</iframe>
+</div>
+
+<div id="exam" class="card hidden">
+<h2>🎯 Egzamin</h2>
+<div id="q"></div>
+<h3 id="item"></h3>
+<div id="answers"></div>
+<div id="feedback" style="margin-top:15px;font-size:20px"></div>
+</div>
+
+<div id="stats" class="card hidden">
+<h2>📊 Statystyki</h2>
+<p id="st"></p>
+</div>
+
+</div>
+
+<script>
+const data={
+"Kabina":["Detektor prądu zmiennego HotStick","Dalmierz BOSCH","Gaśnica GP"],
+"Skrytka 1 prawa":["Aparaty ODO","Halligan","Pilarka akumulatorowa STIHL"],
+"Skrytka 2 prawa":["Najaśnica","Wkrętarka HILTI","Młot 5kg"],
+"Skrytka 3 prawa":["Wąż W75 20m"],
+"Skrytka 1 lewa":["Pilarka ratownicza STIHL","PSP R-1","Szyny Kramera"],
+"Skrytka 2 lewa":["Skokochron","Nosze płachtowe"],
+"Skrytka 3 lewa":["Gaśnica 4kg"],
+"Podest":["Agregat prądotwórczy","Deska ortopedyczna"]
+};
+let pool=[],i=0,score=0;
+
+function show(id){
+ ['learn','exam','stats'].forEach(x=>document.getElementById(x).classList.add('hidden'));
+ document.getElementById(id).classList.remove('hidden');
+ if(id==='exam')startExam();
+ if(id==='stats'){
+   document.getElementById('st').innerHTML=
+   'Najlepszy wynik: '+(localStorage.bestExam||'-')+'<br>Egzaminów: '+(localStorage.examCount||0);
+ }
+}
+
+function startExam(){
+ pool=[];
+ for(let l in data) data[l].forEach(e=>pool.push({item:e,loc:l}));
+ pool.sort(()=>Math.random()-0.5);
+ pool=pool.slice(0,20);
+ i=0;score=0;
+ next();
+}
+
+function next(){
+ if(i>=pool.length){
+   document.getElementById('q').innerHTML='<h2>Wynik '+score+'/20 ('+Math.round(score/20*100)+'%)</h2>';
+   let best=Math.max(score,Number(localStorage.bestExam||0));
+   localStorage.bestExam=best;
+   localStorage.examCount=Number(localStorage.examCount||0)+1;
+   document.getElementById('item').textContent='';
+   document.getElementById('answers').innerHTML='';
+   document.getElementById('feedback').textContent='';
+   return;
+ }
+ let p=pool[i];
+ q.innerHTML='Pytanie '+(i+1)+'/20';
+ item.textContent='Gdzie znajduje się: '+p.item+' ?';
+ let opts=[p.loc];
+ while(opts.length<4){
+   let k=Object.keys(data)[Math.floor(Math.random()*Object.keys(data).length)];
+   if(!opts.includes(k)) opts.push(k);
+ }
+ opts.sort(()=>Math.random()-0.5);
+ answers.innerHTML='';
+ feedback.textContent='';
+ opts.forEach(o=>{
+   let b=document.createElement('button');
+   b.className='answer';
+   b.textContent=o;
+   b.onclick=()=>{
+      if(o===p.loc){score++;feedback.innerHTML='✅ Poprawnie';}
+      else feedback.innerHTML='❌ Poprawna odpowiedź: <b>'+p.loc+'</b>';
+      setTimeout(()=>{i++;next();},900);
+   };
+   answers.appendChild(b);
+ });
+}
+</script>
+</body>
+</html>
